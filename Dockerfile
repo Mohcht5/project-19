@@ -1,15 +1,24 @@
-# Use a base image that supports systemd, for example, Ubuntu
+# استخدام صورة Ubuntu كأساس
 FROM ubuntu:20.04
 
-# Install necessary packages
-RUN apt-get update && \
-    apt-get install -y shellinabox && \
-    apt-get install -y systemd && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN echo 'root:root' | chpasswd
-# Expose the web-based terminal port
-EXPOSE 4200
+# إعداد البيئة (تحديث الحزم وتثبيت الحزم الأساسية مثل curl, wget, git, etc.)
+RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get install -y wget curl git sudo \
+    apache2 php libapache2-mod-php mysql-server \
+    php-mysql php-xml php-curl php-mbstring \
+    php-zip php-json
 
-# Start shellinabox
-CMD ["/usr/bin/shellinaboxd", "-t", "-s", "/:LOGIN"]
+# تنزيل السكربت
+RUN wget https://raw.githubusercontent.com/iptvpanel/Xtream-Codes-1.60.0/master/installer.sh -O /installer.sh
+
+# إعطاء صلاحيات تنفيذ السكربت
+RUN chmod 755 /installer.sh
+
+# تنفيذ السكربت
+RUN /bin/bash /installer.sh
+
+# فتح المنفذ 80 لتشغيل Apache
+EXPOSE 80
+
+# بدء Apache عند تشغيل الحاوية
+CMD ["apachectl", "-D", "FOREGROUND"]
