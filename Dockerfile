@@ -1,10 +1,10 @@
-# استخدام صورة PHP مع Apache كقاعدة
-FROM php:7.4-apache
+# استخدام صورة PHP مع Apache ونسخة أحدث من PHP 8.0 أو 8.1
+FROM php:8.1-apache
 
-# تحديث مستودعات الحزم
-RUN apt-get update --fix-missing
+# تحديث المستودعات
+RUN apt-get update --fix-missing && apt-get upgrade -y
 
-# تثبيت الحزم الضرورية
+# تثبيت الحزم الضرورية (وإزالة الحزم التي لم تعد ضرورية بعد التثبيت)
 RUN apt-get install -y \
     libapache2-mod-php \
     git \
@@ -22,17 +22,17 @@ WORKDIR /var/www/html
 # نسخ ملفات Xtreme UI إلى مجلد العمل
 COPY . /var/www/html/
 
-# تثبيت التبعيات عبر Composer (إذا كان Xtreme UI يستخدم Composer)
+# تثبيت Composer إذا لزم الأمر (لتثبيت تبعيات Xtreme UI)
 RUN curl -sS https://getcomposer.org/installer | php \
     && mv composer.phar /usr/local/bin/composer \
     && composer install --no-dev --optimize-autoloader
 
-# تعيين صلاحيات المجلدات (إذا لزم الأمر)
+# تعيين صلاحيات المجلدات والملفات
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html
 
-# تعريض المنفذ الذي يعمل عليه التطبيق
+# تعريض المنفذ 80 (لاستقبال الاتصال)
 EXPOSE 80
 
-# تنفيذ Apache في الوضع الأمامي
+# بدء Apache في الوضع الأمامي
 CMD ["apache2-foreground"]
