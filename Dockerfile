@@ -1,20 +1,26 @@
-# استخدام صورة Ubuntu كأساس
+# استخدام صورة Ubuntu LTS (مثال: 20.04)
 FROM ubuntu:20.04
 
-# تثبيت الحزم المطلوبة
-RUN apt-get update && apt-get install -y \
-    xfce4 \
-    xfce4-terminal \
-    xrdp \
-    supervisor \
-    dbus-x11 \
-    && apt-get clean
+# تحديث الحزم وتثبيت الأساسيات
+RUN apt-get update && apt-get upgrade -y
 
-# إعداد xRDP لبدء التشغيل
-RUN echo "startxfce4" > ~/.xsession
+# تثبيت الحزم التي قد تحتاجها
+RUN apt-get install -y \
+    curl \
+    wget \
+    vim \
+    net-tools \
+    git
 
-# فتح المنفذ الخاص بـ RDP (عادة 3389)
-EXPOSE 3389
+# تعيين البيئة بشكل اختياري
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
-# بدء xRDP باستخدام supervisord
-CMD ["/usr/bin/supervisord"]
+# تنفيذ أي أوامر إضافية هنا حسب الحاجة
+# مثل تثبيت تطبيقات أو خدمات أخرى
+
+# تعيين المنفذ الذي سيتم تعريضه (اختياري)
+EXPOSE 80 443
+
+# تحديد الأمر الافتراضي الذي سيتم تنفيذه عند تشغيل الحاوية
+CMD ["bash"]
