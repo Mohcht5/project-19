@@ -1,26 +1,39 @@
-# استخدام صورة Ubuntu LTS (مثال: 20.04)
-FROM ubuntu:20.04
+# استخدم صورة PHP مع Apache كقاعدة
+FROM php:7.4-apache
 
-# تحديث الحزم وتثبيت الأساسيات
-RUN apt-get update && apt-get upgrade -y
-
-# تثبيت الحزم التي قد تحتاجها
-RUN apt-get install -y \
+# تثبيت الحزم الضرورية
+RUN apt-get update && apt-get install -y \
+    libapache2-mod-php \
+    git \
+    unzip \
     curl \
-    wget \
-    vim \
-    net-tools \
-    git
+    mariadb-client \
+    && rm -rf /var/lib/apt/lists/*
 
-# تعيين البيئة بشكل اختياري
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+# تمكين mod_rewrite
+RUN a2enmod rewrite
 
-# تنفيذ أي أوامر إضافية هنا حسب الحاجة
-# مثل تثبيت تطبيقات أو خدمات أخرى
+# إعداد مجلد العمل داخل الحاوية
+WORKDIR /var/www/html
 
-# تعيين المنفذ الذي سيتم تعريضه (اختياري)
-EXPOSE 80 443
+# نسخ ملفات Xtreme UI إلى مجلد العمل
+COPY . /var/www/html/
 
-# تحديد الأمر الافتراضي الذي سيتم تنفيذه عند تشغيل الحاوية
-CMD ["bash"]
+# تثبيت التبعيات عبر Composer (إذا كان Xtreme UI يستخدم Composer)
+RUN curl -sS https://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer \
+    && composer install --no-dev --optimize-autoloader
+
+# تعيين صلاحيات المجلدات (إذا لزم الأمر)
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html
+
+# إعداد قاعدة البيانات (إن كانت هناك ملفات لتثبيت قاعدة البيانات مثل .sql أو سكربتات)
+# يمكن نسخها هنا إن لزم الأمر
+# COPY ./db_dump.sql /docker-entrypoint-initdb.d/
+
+# تعريض المنفذ الذي يعمل عليه التطبيق
+EXPOSE 80
+
+# تنفيذ Apache في الوضع الأمامي
+CMD ["apache2-foreground"]
