@@ -1,8 +1,11 @@
-# استخدم صورة PHP مع Apache كقاعدة
+# استخدام صورة PHP مع Apache كقاعدة
 FROM php:7.4-apache
 
+# تحديث مستودعات الحزم
+RUN apt-get update --fix-missing
+
 # تثبيت الحزم الضرورية
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     libapache2-mod-php \
     git \
     unzip \
@@ -27,10 +30,6 @@ RUN curl -sS https://getcomposer.org/installer | php \
 # تعيين صلاحيات المجلدات (إذا لزم الأمر)
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html
-
-# إعداد قاعدة البيانات (إن كانت هناك ملفات لتثبيت قاعدة البيانات مثل .sql أو سكربتات)
-# يمكن نسخها هنا إن لزم الأمر
-# COPY ./db_dump.sql /docker-entrypoint-initdb.d/
 
 # تعريض المنفذ الذي يعمل عليه التطبيق
 EXPOSE 80
