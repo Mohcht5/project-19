@@ -1,24 +1,20 @@
 # استخدام صورة Ubuntu كأساس
 FROM ubuntu:20.04
 
-# إعداد البيئة (تحديث الحزم وتثبيت الحزم الأساسية مثل curl, wget, git, etc.)
-RUN apt-get update -y && apt-get upgrade -y
-RUN apt-get install -y wget curl git sudo \
-    apache2 php libapache2-mod-php mysql-server \
-    php-mysql php-xml php-curl php-mbstring \
-    php-zip php-json
+# تثبيت الحزم المطلوبة
+RUN apt-get update && apt-get install -y \
+    xfce4 \
+    xfce4-terminal \
+    xrdp \
+    supervisor \
+    dbus-x11 \
+    && apt-get clean
 
-# تنزيل السكربت
-RUN wget https://raw.githubusercontent.com/iptvpanel/Xtream-Codes-1.60.0/master/installer.sh -O /installer.sh
+# إعداد xRDP لبدء التشغيل
+RUN echo "startxfce4" > ~/.xsession
 
-# إعطاء صلاحيات تنفيذ السكربت
-RUN chmod 755 /installer.sh
+# فتح المنفذ الخاص بـ RDP (عادة 3389)
+EXPOSE 3389
 
-# تنفيذ السكربت
-RUN /bin/bash /installer.sh
-
-# فتح المنفذ 80 لتشغيل Apache
-EXPOSE 80
-
-# بدء Apache عند تشغيل الحاوية
-CMD ["apachectl", "-D", "FOREGROUND"]
+# بدء xRDP باستخدام supervisord
+CMD ["/usr/bin/supervisord"]
