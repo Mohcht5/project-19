@@ -1,28 +1,41 @@
-# المرحلة الأولى: بناء التطبيق
-FROM golang:1.21 as builder
+# الأساس: استخدام إصدار مدعوم
+FROM ubuntu:20.04
 
-WORKDIR /app
+# إعداد متغيرات البيئة
+ENV stalker_version 550
+ENV stalker_zip ministra-5.5.0.zip
 
-COPY . .
-
-RUN go mod tidy
-RUN go build -o m3u-proxy
-
-# المرحلة الثانية: التشغيل
-FROM ubuntu:22.04
-
-WORKDIR /app
-
-# تثبيت المتطلبات الأساسية
+# تثبيت الحزم الأساسية
 RUN apt-get update && apt-get install -y \
-    libc6 \
+    nginx \
+    php \
+    php-mysql \
+    unzip \
+    curl \
+    wget \
+    locales \
     && apt-get clean
 
-# نسخ التطبيق
-COPY --from=builder /app/m3u-proxy /app/m3u-proxy
+# إعداد اللغات
+RUN for i in ru_RU.utf8 en_GB.utf8; do locale-gen $i; done \
+    && dpkg-reconfigure locales
 
-EXPOSE 8080
+# تثبيت Ministra/Stalker
+COPY ${stalker_zip} /
+RUN unzip ${stalker_zip} -d stalker_portal \
+    && mv stalker_portal/* /var/www/stalker_portal \
+    && rm -rf stalker_portal ${stalker_zip}
 
-ENV M3U_URL=""
+# نسخ ملفات الإعدادات
+COPY conf/nginx/*.conf /etc/nginx/conf.d/
+COPY conf/custom.ini /var/www/stalker_portal/server/
 
-CMD ["./m3u-proxy"]
+# تهيئة نقطة الإقلاع
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
+# فتح المنافذ
+EXPOSE 80
+
+# نقطة الإقلاع
+ENTRYPOINT ["/entrypoint.sh"]
