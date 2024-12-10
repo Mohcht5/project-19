@@ -1,19 +1,29 @@
-# استخدام صورة أساسية تحتوي على Bash و الأدوات المطلوبة
+# استخدام صورة Go الرسمية
+FROM golang:1.21 as builder
+
+# إعداد العمل داخل الحاوية
+WORKDIR /app
+
+# نسخ الملفات
+COPY . .
+
+# بناء التطبيق
+RUN go build -o m3u-proxy
+
+# استخدام صورة خفيفة للتشغيل
 FROM debian:bullseye-slim
 
-# تثبيت الأدوات الأساسية مثل wget و sed و mysql-client
-RUN apt-get update && apt-get install -y \
-    wget \
-    sed \
-    mysql-client \
-    && rm -rf /var/lib/apt/lists/*
+# نسخ الملف التنفيذي من المرحلة الأولى
+COPY --from=builder /app/m3u-proxy /app/m3u-proxy
 
-# تحميل السكربتات من GitHub
-RUN wget https://github.com/IPTVUNION/iptvunion/raw/refs/heads/master/iptvunion.sh -O /usr/local/bin/iptvunion.sh \
-    && wget https://github.com/IPTVUNION/iptvunion/raw/refs/heads/master/iptvunionWeb.sh -O /usr/local/bin/iptvunionWeb.sh
+# إعداد العمل داخل الحاوية
+WORKDIR /app
 
-# إعطاء أذونات التنفيذ للسكريبتات
-RUN chmod +x /usr/local/bin/iptvunion.sh /usr/local/bin/iptvunionWeb.sh
+# تحديد المنفذ
+EXPOSE 8080
 
-# تعيين السكربت الذي سيتم تنفيذه عند بدء تشغيل الحاوية
-ENTRYPOINT ["/usr/local/bin/iptvunion.sh"]
+# تحديد المتغيرات البيئية الافتراضية (اختياري)
+ENV M3U_URL=""
+
+# تشغيل التطبيق
+CMD ["./m3u-proxy"]
